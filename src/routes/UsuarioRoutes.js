@@ -9,8 +9,5 @@ router.route('/').post(ctr.createUser)
 router.route('/login').post(ctr.loginUser)
 router.route('/modifyProfile/:id').put(ctr.modifyUser)
 router.route('/modifyPassword/:id').put(ctr.modifyPassword)
-router.route('/invitation/:grupo').put(ctr.acceptInvitationGroup)
-
-
 
 export default router

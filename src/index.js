@@ -1,25 +1,18 @@
-// src/index.js
-import dotenv from 'dotenv';
-import app from './app.js';  // Usamos import para traer la aplicación Express
-import './database.js';      // Conexión a la base de datos
-import cors from 'cors';
+import 'dotenv/config'; // Carga .env automáticamente desde la raíz
+import mongoose from 'mongoose';
+import app from './app.js';
 
-dotenv.config();  // Cargar variables de entorno desde .env
+const PORT = process.env.PORT || 5000;
 
-//Usar cors/// NO TOCAR QUE SI NO NO FUNCIONA NA
-
-app.use(cors({
-    origin: '*', // Permitir todas las orígenes, puedes restringirlo a tu dominio específico
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-
-// Iniciar el servidor
-async function main() {
-  const port = app.get('port');
-  await app.listen(port);
-  console.log('El servidor se está ejecutando en el puerto:', port);
-}
-
-main();
+// Conexión a MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => {
+        console.log('MongoDB conectado');
+        app.listen(PORT, () => {
+            console.log(`Servidor en http://localhost:${PORT}`);
+        });
+    })
+    .catch(err => {
+        console.error('Error de conexión:', err.message);
+        process.exit(1);
+    });

@@ -1,17 +1,23 @@
 import mongoose from 'mongoose';
 
-const { connect, connection: _connection } = mongoose;
+const { connect, connection } = mongoose;
 
+const URI = process.env.MONGODB_URI; // Obligatorio (sin default hardcodeado).
 
-//cadena de conexion
-const URI = process.env.MONGODB_URI
-            ? process.env.MONGODB_URI
-            : 'cadena'
-            // mongodb+srv://admin:admin@cluster0.op2qq.mongodb.net/TaskCal?retryWrites=true&w=majority&appName=Cluster0
-connect(URI)
+if (!URI) {
+  throw new Error('La variable MONGODB_URI no está definida en .env');
+}
 
-const connection = _connection
-
-connection.once('open', ()=>{
-    console.log('La base de datos ha sido conectada: ', URI);
+connect(URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 })
+  .then(() => console.log('Conexión a MongoDB Atlas establecida'))
+  .catch((error) => {
+    console.error('Error de conexión:', error.message);
+    process.exit(1); // Detiene la aplicación si hay error.
+  });
+
+connection.on('error', (error) => {
+  console.error('Error después de conectar:', error);
+});
