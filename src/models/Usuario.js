@@ -1,10 +1,9 @@
 import { Schema, model } from 'mongoose';
 
 const usuarioSchema = new Schema({
-    firebase_uid: {  // ID único de Firebase (clave para vincular)
-        type: String,
-        required: true,
-        unique: true
+    _id: {
+        type: String,  // Cambia de ObjectId a String
+        required: true
     },
     nombre: {
         type: String,
@@ -17,13 +16,15 @@ const usuarioSchema = new Schema({
     },
     metodo_autenticacion: {  // 'google' o 'email' (para saber cómo inició sesión)
         type: String,
-        required: true
+        required: false
     }
 }, {
     timestamps: {
         createdAt: 'fecha_creacion',
         updatedAt: 'fecha_actualizacion'
-    }
+    },
+    _id: false,  // Importante: desactiva el _id automático
+    versionKey: false // Elimina el campo __v
 });
 
 export default model('Usuario', usuarioSchema);

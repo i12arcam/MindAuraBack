@@ -1,4 +1,3 @@
-// src/app.js
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
@@ -25,9 +24,13 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Rutas
-import userRoutes from './routes/UsuarioRoutes.js';  // Importa las rutas usando import
+import userRoutes from './routes/UsuarioRoutes.js';
+import consejoRoutes from './routes/ConsejoRoutes.js';
+import emocionRoutes from './routes/EmocionRoute.js';
 
 app.use('/api/user', userRoutes);
+app.use('/api/consejo', consejoRoutes);
+app.use('/api/emocion', emocionRoutes);
 
 app.use(express.static('public'));
 

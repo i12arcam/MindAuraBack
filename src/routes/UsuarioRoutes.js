@@ -1,4 +1,4 @@
-import * as ctr from "../controllers/userController.js";
+import * as ctr from "../controllers/usuarioController.js";
 import express from 'express'
 const router = express.Router()
 
@@ -6,8 +6,6 @@ const router = express.Router()
 router.route('/').get(ctr.getUsers)
 router.route('/:id').get(ctr.getUser)
 router.route('/').post(ctr.createUser)
-router.route('/login').post(ctr.loginUser)
 router.route('/modifyProfile/:id').put(ctr.modifyUser)
-router.route('/modifyPassword/:id').put(ctr.modifyPassword)
 
 export default router
