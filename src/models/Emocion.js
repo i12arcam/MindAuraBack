@@ -12,11 +12,11 @@ const emocionSchema = new Schema({
         trim: true
     },
     etiquetas: {
-        type: String,
+        type: [String],
         required: true
     },
     usuario: { 
-        type: Schema.Types.ObjectId, 
+        type: String, 
         ref: 'Usuario', 
         required: true,
         index: true // Índice para búsquedas rápidas

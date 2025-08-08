@@ -42,12 +42,21 @@ const recursoSchema = new Schema({
         },
         enum: ['baja', 'media', 'alta'],
         default: null
-    }
+    },
 },
 {
     timestamps: { 
         createdAt: 'fecha_creacion',
         updatedAt: 'fecha_actualizacion'
+    },
+    // Transforma el documento al convertirlo a JSON
+    toJSON: {
+        transform: function(doc, ret) {
+            ret.id = ret._id;  // Copia `_id` a `id`
+            delete ret._id;     // Elimina `_id`
+            delete ret.__v;     // Elimina la versión (opcional)
+            return ret;
+        }
     }
 });
 

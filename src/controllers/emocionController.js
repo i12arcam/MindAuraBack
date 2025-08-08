@@ -62,7 +62,7 @@ export const getRecentEmociones = asyncHandler(async (req, res) => {
 
 // CREAR UNA EMOCION
 export const createEmocion = asyncHandler(async (req, res) => {
-    // Nota: usuario es realmente el id del usuario
+    // Nota: usuario es en realidad el id del usuario
     const { titulo, descripcion, etiquetas, usuario } = req.body;
     
     // Validación básica
@@ -71,17 +71,18 @@ export const createEmocion = asyncHandler(async (req, res) => {
     }
     
     try {
-        // Crear nuevo Emocion
-        const nuevoEmocion = await Emocion.create({
+        
+        // Crear nueva Emocion
+        const nuevaEmocion = await Emocion.create({
             titulo,
             descripcion,
-            etiquetas,
+            etiquetas: etiquetas,
             usuario
         });
 
-        console.log("Emocion guardada:", nuevoEmocion);
+        console.log("Emocion guardada:", nuevaEmocion);
 
-        res.status(201).json(nuevoEmocion);
+        res.status(201).json(nuevaEmocion);
 
 
     } catch (error) {

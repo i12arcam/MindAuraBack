@@ -10,7 +10,7 @@ const consejoSchema = new Schema({
         required: true
     },
     etiquetas: {
-        type: String,
+        type: [String],
         required: true
     }
 },
