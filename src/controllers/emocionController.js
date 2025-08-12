@@ -26,6 +26,36 @@ export const getEmociones = asyncHandler(async (req, res) => {
 });
 
 // OBTENER LAS EMOCIONES DE UN USUARIO EN EL ÚLTIMO MES
+export const getAllEmociones = asyncHandler(async (req, res) => {
+    try {
+        const usuarioId = req.params.usuarioId;
+        
+        if (!usuarioId) {
+            return res.status(400).json({ message: "Se requiere el ID del usuario" });
+        }
+
+        // Buscar emociones del usuario creadas en el último mes
+        const emociones = await Emocion.find({
+            usuario: usuarioId
+        }).sort({ fechaCreacion: -1 }); // Ordenar de más reciente a más antigua
+
+        if (emociones.length === 0) {
+            return res.status(404).json({ 
+                message: "No se encontraron emociones para este usuario en el último mes",
+                periodo: `Desde ${unMesAtras.toISOString()} hasta ahora`
+            });
+        }
+
+        res.status(200).json(emociones);
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Error al obtener las emociones recientes",
+            error: error.message 
+        });
+    }
+});
+
+// OBTENER LAS EMOCIONES DE UN USUARIO EN EL ÚLTIMO MES
 export const getRecentEmociones = asyncHandler(async (req, res) => {
     try {
         const usuarioId = req.params.usuarioId;
@@ -42,7 +72,7 @@ export const getRecentEmociones = asyncHandler(async (req, res) => {
         const emociones = await Emocion.find({
             usuario: usuarioId,
             fecha_creacion: { $gte: unMesAtras } // $gte = greater than or equal to
-        }).sort({ fecha_creacion: -1 }); // Ordenar de más reciente a más antigua
+        }).sort({ fechaCreacion: -1 }); // Ordenar de más reciente a más antigua
 
         if (emociones.length === 0) {
             return res.status(404).json({ 
@@ -76,7 +106,7 @@ export const createEmocion = asyncHandler(async (req, res) => {
         const nuevaEmocion = await Emocion.create({
             titulo,
             descripcion,
-            etiquetas: etiquetas,
+            etiquetas,
             usuario
         });
 

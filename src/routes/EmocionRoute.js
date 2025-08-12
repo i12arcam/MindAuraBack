@@ -6,8 +6,10 @@ const router = express.Router()
 // en el nombre de las funciones.
 
 ///api/emocion
+router.route('/all/:usuarioId').get(ctr.getAllEmociones);
+router.route('/recent/:usuarioId').get(ctr.getRecentEmociones);
+
 router.route('/:usuarioId').get(ctr.getEmociones);
-router.route('/:usuarioId').get(ctr.getRecentEmociones);
 router.route('/').post(ctr.createEmocion)
 
 export default router

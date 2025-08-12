@@ -11,16 +11,12 @@ const metaSchema = new Schema({
         required: true,
         trim: true
     },
-    categoria: {
-        type: String,
-        required: true
-    },
-    dias_duracion: {  // Duración en días (RI6)
+    diasDuracion: {  // Duración en días (RI6)
         type: Number,
         required: true,
         min: 1
     },
-    dias_completados: {  // Progreso (días completados)
+    diasCompletados: {  // Progreso (días completados)
         type: Number,
         default: 0,
         min: 0
@@ -33,19 +29,19 @@ const metaSchema = new Schema({
         type: String,
         required: true
     },
-    fecha_inicio : {
+    fechaInicio : {
         type: Date,
         required: true,
         default: Date.now
     },
-    fecha_fin : {
+    fechaFin : {
         type: Date,
         required: function() {
             return this.estado === 'completada'; // Obligatorio solo si está completada
         }
     },
     usuario: { 
-        type: Schema.Types.ObjectId, 
+        type: String, 
         ref: 'Usuario', 
         required: true,
         index: true // Índice para búsquedas rápidas
@@ -53,13 +49,22 @@ const metaSchema = new Schema({
 },
 {
     timestamps: { 
-        createdAt: 'fecha_creacion'
+        updatedAt: 'fechaActualizacion'
+    },
+    // Transforma el documento al convertirlo a JSON
+    toJSON: {
+        transform: function(doc, ret) {
+            ret.id = ret._id;  // Copia `_id` a `id`
+            delete ret._id;     // Elimina `_id`
+            delete ret.__v;     // Elimina la versión
+            return ret;
+        }
     }
 });
 
 // Validación: end_date debe ser >= start_date
-metaSchema.path('fecha_fin').validate(function(value) {
-    return value >= this.fecha_inicio;
+metaSchema.path('fechaFin').validate(function(value) {
+    return value >= this.fechaInicio;
 }, 'La fecha de fin no puede ser anterior a la de inicio');
 
 export default model('Meta', metaSchema);

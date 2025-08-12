@@ -1,6 +1,7 @@
 import Consejo from '../models/Consejo.js';
 import Emocion from '../models/Emocion.js';
 import asyncHandler from 'express-async-handler';
+import { todosLosConsejos } from '../data/listaConsejosApp.js';
 
 // Implementar. Ponemos modificar y eliminar? Lo troncal de este sitio es devolver un consejo segun las etiquetas de emociones
 // que se pasen.
@@ -52,13 +53,6 @@ export const selectConsejo = asyncHandler(async (req, res) => {
             etiquetas: { $in: etiquetas }
           }).exec(); 
 
-        // Verifica todos los consejos con sus etiquetas
-        const todosConsejos = await Consejo.find({});
-        console.log("Todos los consejos:", todosConsejos.map(c => ({
-        titulo: c.titulo,
-        etiquetas: c.etiquetas
-        })));
-
         if (consejosFiltrados.length === 0) {
             console.log("Escenario 1: Hay emociones, pero no coincidencias.");
             return res.status(404).json({ 
@@ -67,7 +61,6 @@ export const selectConsejo = asyncHandler(async (req, res) => {
             });
         }
         console.log("Escenario 2: Hay emociones y coincidencias.");
-        console.log(consejosFiltrados);
         console.log(etiquetas);
 
         // 2. Calculamos un "puntaje de coincidencia" para cada consejo
@@ -167,4 +160,23 @@ export const createConsejo = asyncHandler(async (req, res) => {
         console.error("Error en creación de Consejo:", error);
         res.status(500).json({ message: "Error interno del servidor" });
     }
+});
+
+export const establecerTodosLosConsejos = asyncHandler(async (req, res) => {
+  try {
+    // Opción 1: Borrar todo y recrear (la que tenías)
+    await Consejo.deleteMany({});
+    const result = await Consejo.insertMany(todosLosConsejos);
+
+    res.status(201).json({
+      message: `Base de datos actualizada con ${result.length} consejos`
+    });
+    
+  } catch (error) {
+    console.error('Error al actualizar consejos:', error);
+    res.status(500).json({
+      message: 'Error al actualizar la base de consejos',
+      error: error.message
+    });
+  }
 });

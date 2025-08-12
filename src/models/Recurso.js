@@ -54,7 +54,7 @@ const recursoSchema = new Schema({
         transform: function(doc, ret) {
             ret.id = ret._id;  // Copia `_id` a `id`
             delete ret._id;     // Elimina `_id`
-            delete ret.__v;     // Elimina la versión (opcional)
+            delete ret.__v;     // Elimina la versión
             return ret;
         }
     }

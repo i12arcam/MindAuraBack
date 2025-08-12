@@ -1,6 +1,7 @@
 import Recurso from '../models/Recurso.js';
 import Emocion from '../models/Emocion.js';
 import asyncHandler from 'express-async-handler';
+import { todosLosRecursos } from '../data/listaRecursosApp.js';
 
 // OBTENER TODOS LOS RECURSOS
 export const getRecursos = asyncHandler(async (req, res) => {
@@ -33,18 +34,12 @@ export const getRecurso = asyncHandler(async (req, res) => {
 export const selectRecurso = asyncHandler(async (req, res) => {
     try {
         const etiquetas = await filtrarEtiquetas(req.query.idUsuario);
+
+        let obtenerConsejoAleatorio = false;
         
         if (!etiquetas || etiquetas.length === 0) {
             console.log("Escenario 0: Sin emociones previas - recurso aleatorio");
-            const count = await Recurso.countDocuments();
-            const random = Math.floor(Math.random() * count);
-            const recurso = await Recurso.findOne().skip(random);
-            
-            if (recurso) {
-                return res.status(200).json(recurso);
-            } else {
-                return res.status(404).json({ message: "No hay recursos disponibles" });
-            }
+            obtenerConsejoAleatorio = true;
         }
         
         // 1. Filtramos recursos que tienen al menos una etiqueta coincidente
@@ -52,15 +47,21 @@ export const selectRecurso = asyncHandler(async (req, res) => {
             etiquetas: { $in: etiquetas }
         }).exec(); 
 
-        // Log para depuración
-        console.log("Todos los recursos:", await Recurso.find({}).select('titulo etiquetas'));
-
         if (recursosFiltrados.length === 0) {
             console.log("Escenario 1: Hay emociones, pero no coincidencias.");
-            return res.status(404).json({ 
-                message: "No se encontraron recursos con esas etiquetas",
-                sugerencia: "Intenta con otras etiquetas o consulta la lista de recursos sin filtros"
-            });
+            obtenerConsejoAleatorio = true;
+        }
+
+        if(obtenerConsejoAleatorio) {
+            const recursosAleatorios = await Recurso.aggregate([
+                { $sample: { size: 3 } } 
+            ]);
+        
+            if (recursosAleatorios.length > 0) {
+                return res.status(200).json(recursosAleatorios);
+            } else {
+                return res.status(404).json({ message: "No hay recursos disponibles" });
+            }
         }
         
         console.log("Escenario 2: Hay emociones y coincidencias.");
@@ -83,16 +84,12 @@ export const selectRecurso = asyncHandler(async (req, res) => {
         // Selección con ponderación
         const maxScore = Math.max(...recursosConPuntaje.map(r => r.matchScore));
         const mejoresRecursos = recursosConPuntaje.filter(r => r.matchScore === maxScore);
-        const otrosRecursos = recursosConPuntaje.filter(r => r.matchScore !== maxScore);
+        const otrosRecursos = recursosConPuntaje.filter(r => r.matchScore !== maxScore)
+        .sort((a, b) => b.matchScore - a.matchScore);
 
-        let recursoAleatorio;
-        if (otrosRecursos.length > 0 && Math.random() < 0.2) {
-            recursoAleatorio = otrosRecursos[Math.floor(Math.random() * otrosRecursos.length)];
-        } else {
-            recursoAleatorio = mejoresRecursos[Math.floor(Math.random() * mejoresRecursos.length)];
-        }
+        const listaRecursos = [...mejoresRecursos, ...otrosRecursos];
 
-        res.status(200).json(recursoAleatorio);
+        res.status(200).json(listaRecursos);
         
     } catch (error) {
         res.status(500).json({ 
@@ -253,3 +250,22 @@ export const deleteRecurso = asyncHandler(async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+export const establecerTodosLosRecursos = asyncHandler(async (req, res) => {
+    try {
+      // Opción 1: Borrar todo y recrear (la que tenías)
+      await Recurso.deleteMany({});
+      const result = await Consejo.insertMany(todosLosRecursos);
+  
+      res.status(201).json({
+        message: `Base de datos actualizada con ${result.length} recursos`
+      });
+      
+    } catch (error) {
+      console.error('Error al actualizar recursos:', error);
+      res.status(500).json({
+        message: 'Error al actualizar la base de recursos',
+        error: error.message
+      });
+    }
+  });

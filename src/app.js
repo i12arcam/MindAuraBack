@@ -28,12 +28,14 @@ import userRoutes from './routes/UsuarioRoutes.js';
 import consejoRoutes from './routes/ConsejoRoutes.js';
 import emocionRoutes from './routes/EmocionRoute.js';
 import recursoRoutes from './routes/RecursoRoute.js';
+import metaRoutes from './routes/MetaRoute.js';
 import actividadRoutes from './routes/UsuarioActividadRoute.js';
 
 app.use('/api/user', userRoutes);
 app.use('/api/consejo', consejoRoutes);
 app.use('/api/emocion', emocionRoutes);
 app.use('/api/recurso', recursoRoutes);
+app.use('/api/meta', metaRoutes);
 app.use('/api/actividad', actividadRoutes);
 
 app.use(express.static('public'));
