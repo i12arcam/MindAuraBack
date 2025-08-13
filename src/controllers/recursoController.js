@@ -35,35 +35,50 @@ export const selectRecurso = asyncHandler(async (req, res) => {
     try {
         const etiquetas = await filtrarEtiquetas(req.query.idUsuario);
 
-        let obtenerConsejoAleatorio = false;
+        let obtenerRecursoAleatorio = false;
         
         if (!etiquetas || etiquetas.length === 0) {
             console.log("Escenario 0: Sin emociones previas - recurso aleatorio");
-            obtenerConsejoAleatorio = true;
+            obtenerRecursoAleatorio = true;
         }
         
         // 1. Filtramos recursos que tienen al menos una etiqueta coincidente
         const recursosFiltrados = await Recurso.find({
             etiquetas: { $in: etiquetas }
-        }).exec(); 
+        })
 
         if (recursosFiltrados.length === 0) {
             console.log("Escenario 1: Hay emociones, pero no coincidencias.");
-            obtenerConsejoAleatorio = true;
+            obtenerRecursoAleatorio = true;
         }
 
-        if(obtenerConsejoAleatorio) {
+        if(obtenerRecursoAleatorio) {
             const recursosAleatorios = await Recurso.aggregate([
-                { $sample: { size: 3 } } 
+                { $sample: { size: 3 } },
+                { 
+                    $project: {
+                        _id: 0, // Excluimos _id
+                        id: "$_id", // Creamos id a partir de _id
+                        titulo: 1,
+                        descripcion: 1,
+                        fecha_creacion: 1,
+                        autor: 1,
+                        categoria: 1,
+                        etiquetas: 1,
+                        duracion: 1,
+                        enlace_contenido: 1,
+                        tipo: 1,
+                        dificultad: 1,
+                    } 
+                }
             ]);
-        
+            console.log(recursosAleatorios);
             if (recursosAleatorios.length > 0) {
-                return res.status(200).json(recursosAleatorios);
+                res.status(200).json(recursosAleatorios);
             } else {
-                return res.status(404).json({ message: "No hay recursos disponibles" });
+                res.status(404).json({ message: "No hay recursos disponibles" });
             }
-        }
-        
+        } else {
         console.log("Escenario 2: Hay emociones y coincidencias.");
         console.log(recursosFiltrados);
         console.log(etiquetas);
@@ -90,6 +105,7 @@ export const selectRecurso = asyncHandler(async (req, res) => {
         const listaRecursos = [...mejoresRecursos, ...otrosRecursos];
 
         res.status(200).json(listaRecursos);
+        }
         
     } catch (error) {
         res.status(500).json({ 
@@ -255,7 +271,7 @@ export const establecerTodosLosRecursos = asyncHandler(async (req, res) => {
     try {
       // Opción 1: Borrar todo y recrear (la que tenías)
       await Recurso.deleteMany({});
-      const result = await Consejo.insertMany(todosLosRecursos);
+      const result = await Recurso.insertMany(todosLosRecursos);
   
       res.status(201).json({
         message: `Base de datos actualizada con ${result.length} recursos`
