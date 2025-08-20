@@ -7,7 +7,7 @@ const router = express.Router()
 
 ///api/emocion
 router.route('/all/:usuarioId').get(ctr.getAllEmociones);
-router.route('/recent/:usuarioId').get(ctr.getRecentEmociones);
+router.route('/historial/:usuarioId').get(ctr.getHistorialEmociones);
 
 router.route('/:usuarioId').get(ctr.getEmociones);
 router.route('/').post(ctr.createEmocion)

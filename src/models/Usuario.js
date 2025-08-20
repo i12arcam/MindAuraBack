@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose';
 
 const usuarioSchema = new Schema({
     _id: {
-        type: String,  // Cambia de ObjectId a String
+        type: String, 
         required: true
     },
     nombre: {
@@ -23,8 +23,8 @@ const usuarioSchema = new Schema({
         createdAt: 'fecha_creacion',
         updatedAt: 'fecha_actualizacion'
     },
-    _id: false,  // Importante: desactiva el _id automático
-    versionKey: false // Elimina el campo __v
+    _id: false, 
+    versionKey: false 
 });
 
 export default model('Usuario', usuarioSchema);

@@ -1,16 +1,13 @@
 import Recurso from '../models/Recurso.js';
-import Emocion from '../models/Emocion.js';
 import asyncHandler from 'express-async-handler';
+import { filtrarEtiquetas } from '../utils/filtradorEtiquetas.js';
 import { todosLosRecursos } from '../data/listaRecursosApp.js';
 
 // OBTENER TODOS LOS RECURSOS
 export const getRecursos = asyncHandler(async (req, res) => {
     try {
         const recursos = await Recurso.find({});
-        console.log(recursos);
-
         res.status(200).json(recursos);
-        
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -72,39 +69,42 @@ export const selectRecurso = asyncHandler(async (req, res) => {
                     } 
                 }
             ]);
-            console.log(recursosAleatorios);
             if (recursosAleatorios.length > 0) {
                 res.status(200).json(recursosAleatorios);
             } else {
                 res.status(404).json({ message: "No hay recursos disponibles" });
             }
         } else {
-        console.log("Escenario 2: Hay emociones y coincidencias.");
-        console.log(recursosFiltrados);
-        console.log(etiquetas);
+            console.log("Escenario 2: Hay emociones y coincidencias.");
+            console.log(etiquetas);
 
-        // 2. Calculamos puntaje de coincidencia
-        const recursosConPuntaje = recursosFiltrados.map(recurso => {
-            const etiquetasRecurso = recurso.etiquetas;
-            const coincidencias = etiquetasRecurso.filter(etiqueta => 
-                etiquetas.includes(etiqueta)
-            );
+            // 2. Calculamos puntaje de coincidencia
+            const recursosConPuntaje = recursosFiltrados.map(recurso => {
+                const etiquetasRecurso = recurso.etiquetas;
+                const coincidencias = etiquetasRecurso.filter(etiqueta => 
+                    etiquetas.includes(etiqueta)
+                );
+
+                // Convertimos el _id a id
+                const recursoObj = recurso.toObject();
+                recursoObj.id = recursoObj._id;
+                delete recursoObj._id;
+                
+                return {
+                    ...recursoObj,
+                    matchScore: coincidencias.length
+                };
+            });
             
-            return {
-                ...recurso.toObject(),
-                matchScore: coincidencias.length
-            };
-        });
-          
-        // Selección con ponderación
-        const maxScore = Math.max(...recursosConPuntaje.map(r => r.matchScore));
-        const mejoresRecursos = recursosConPuntaje.filter(r => r.matchScore === maxScore);
-        const otrosRecursos = recursosConPuntaje.filter(r => r.matchScore !== maxScore)
-        .sort((a, b) => b.matchScore - a.matchScore);
+            // Selección con ponderación
+            const maxScore = Math.max(...recursosConPuntaje.map(r => r.matchScore));
+            const mejoresRecursos = recursosConPuntaje.filter(r => r.matchScore === maxScore);
+            const otrosRecursos = recursosConPuntaje.filter(r => r.matchScore !== maxScore)
+            .sort((a, b) => b.matchScore - a.matchScore);
 
-        const listaRecursos = [...mejoresRecursos, ...otrosRecursos];
+            const listaRecursos = [...mejoresRecursos, ...otrosRecursos];
 
-        res.status(200).json(listaRecursos);
+            res.status(200).json(listaRecursos);
         }
         
     } catch (error) {
@@ -115,48 +115,12 @@ export const selectRecurso = asyncHandler(async (req, res) => {
     }
 });
 
-// FILTRAR ETIQUETAS BASADO EN HISTORIAL DE EMOCIONES
-const filtrarEtiquetas = async (usuarioId) => {
-    try {
-        const emociones = await Emocion.find({ usuario: usuarioId })
-                                     .sort({ fecha_creacion: -1 })
-                                     .limit(10);
-        
-        if (emociones.length === 0) return null;
-        
-        if (emociones.length < 3) {
-            return emociones[0].etiquetas;
-        }
-        
-        const frecuenciaEtiquetas = {};
-        
-        emociones.forEach(emocion => {
-            emocion.etiquetas.forEach(etiqueta => {
-                if (etiqueta) {
-                    frecuenciaEtiquetas[etiqueta] = (frecuenciaEtiquetas[etiqueta] || 0) + 1;
-                }
-            });
-        });
-        
-        return Object.entries(frecuenciaEtiquetas)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
-            .map(entry => entry[0]);
-        
-    } catch (error) {
-        console.error("Error al filtrar etiquetas:", error);
-        return null;
-    }
-};
-
-// OBTENER TODOS LOS RECURSOS
+// BUSCAR RECURSOS POR PARÁMETROS
 export const buscarRecursos = asyncHandler(async (req, res) => {
     const { parametro, filtro } = req.params;
     try {
         let query = {};
-        
-        // Aplicar el filtro correspondiente
-        console.log(filtro);
+
         switch(filtro) {
             case "titulo":
                 query = { titulo: { $regex: parametro, $options: 'i' } };
@@ -269,7 +233,7 @@ export const deleteRecurso = asyncHandler(async (req, res) => {
 
 export const establecerTodosLosRecursos = asyncHandler(async (req, res) => {
     try {
-      // Opción 1: Borrar todo y recrear (la que tenías)
+        
       await Recurso.deleteMany({});
       const result = await Recurso.insertMany(todosLosRecursos);
   

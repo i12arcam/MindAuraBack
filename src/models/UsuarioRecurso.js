@@ -1,12 +1,12 @@
 import { Schema, model } from 'mongoose';
 
-const usuarioActividadSchema = new Schema({
-    usuario_id: {
+const usuarioRecursoSchema = new Schema({
+    usuarioId: {
         type: String,
         ref: 'Usuario',
         required: true
     },
-    recurso_id: {
+    recursoId: {
         type: Schema.Types.ObjectId,
         ref: 'Recurso',
         required: true
@@ -14,19 +14,13 @@ const usuarioActividadSchema = new Schema({
     estado: {
         type: String,
         required: true,
-        enum: ['en_progreso', 'completada'],
+        enum: ['en_progreso', 'completado', 'visto'],
         default: 'en_progreso'
-    },
-    fecha_inicio: {
-        type: Date,
-        default: Date.now
-    },
-    fecha_finalizacion: {
-        type: Date,
-        default: null
     }
 }, {
-    timestamps: false, 
+    timestamps: { 
+        createdAt: 'fechaInicio'
+    },
     versionKey: false,  
     toJSON: {
         transform: function(doc, ret) {
@@ -38,6 +32,6 @@ const usuarioActividadSchema = new Schema({
 });
 
 // Índice compuesto para evitar duplicados de usuario-recurso
-usuarioActividadSchema.index({ usuario_id: 1, recurso_id: 1 }, { unique: true });
+usuarioRecursoSchema.index({ usuarioId: 1, recursoId: 1 }, { unique: true });
 
-export default model('UsuarioActividad', usuarioActividadSchema);
+export default model('UsuarioRecurso', usuarioRecursoSchema);

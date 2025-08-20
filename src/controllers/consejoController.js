@@ -1,6 +1,6 @@
 import Consejo from '../models/Consejo.js';
-import Emocion from '../models/Emocion.js';
 import asyncHandler from 'express-async-handler';
+import { filtrarEtiquetas } from '../utils/filtradorEtiquetas.js';
 import { todosLosConsejos } from '../data/listaConsejosApp.js';
 
 // Implementar. Ponemos modificar y eliminar? Lo troncal de este sitio es devolver un consejo segun las etiquetas de emociones
@@ -99,40 +99,6 @@ export const selectConsejo = asyncHandler(async (req, res) => {
         });
     }
 });
-
-const filtrarEtiquetas = async (usuarioId) => {
-    try {
-        const emociones = await Emocion.find({ usuario: usuarioId })
-                                     .sort({ fecha_creacion: -1 })
-                                     .limit(10);
-        
-        if (emociones.length === 0) return null;
-        
-        if (emociones.length < 3) {
-            // Convertir a array y limpiar
-            return emociones[0].etiquetas;
-        }
-        
-        const frecuenciaEtiquetas = {};
-        
-        emociones.forEach(emocion => {
-            emocion.etiquetas.forEach(etiqueta => {
-                if (etiqueta) {
-                    frecuenciaEtiquetas[etiqueta] = (frecuenciaEtiquetas[etiqueta] || 0) + 1;
-                }
-            });
-        });
-        
-        return Object.entries(frecuenciaEtiquetas)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
-            .map(entry => entry[0]);
-        
-    } catch (error) {
-        console.error("Error al filtrar etiquetas:", error);
-        return null;
-    }
-};
 
 // CREAR UN CONSEJO
 export const createConsejo = asyncHandler(async (req, res) => {
