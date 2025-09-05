@@ -167,16 +167,17 @@ export const buscarProgramas = asyncHandler(async (req, res) => {
 // CREAR UN NUEVO PROGRAMA
 export const createPrograma = asyncHandler(async (req, res) => {
     const { titulo, descripcion, categoria, etiquetas, recursos } = req.body;
+
     
-    // Validación básica
+    // El backend ahora espera array de strings (IDs), no objetos completos
     if (!titulo || !categoria || !recursos || recursos.length === 0) {
         return res.status(400).json({ 
-            message: "Faltan campos requeridos: título, categoría y al menos un recurso son obligatorios" 
+            message: "Faltan campos requeridos" 
         });
     }
     
     try {
-        // Verificar que todos los recursos existen
+        // Verificar que todos los recursos existen (por sus IDs)
         const recursosExistentes = await Recurso.find({ _id: { $in: recursos } });
         if (recursosExistentes.length !== recursos.length) {
             return res.status(400).json({ message: "Uno o más recursos no existen" });
@@ -190,7 +191,10 @@ export const createPrograma = asyncHandler(async (req, res) => {
             recursos
         });
 
-        res.status(201).json(nuevoPrograma);
+        // Populate para devolver el programa con recursos completos
+        const programaPopulado = await Programa.findById(nuevoPrograma._id).populate('recursos');
+        
+        res.status(201).json(programaPopulado);
 
     } catch (error) {
         console.error("Error en creación de Programa:", error);

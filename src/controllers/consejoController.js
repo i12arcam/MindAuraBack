@@ -146,3 +146,49 @@ export const establecerTodosLosConsejos = asyncHandler(async (req, res) => {
     });
   }
 });
+
+// ACTUALIZAR UN CONSEJO
+export const updateConsejo = asyncHandler(async (req, res) => {
+    try {
+        const { id, titulo, contenido, etiquetas } = req.body;
+        
+        if (!id) {
+            return res.status(400).json({ message: "Se requiere el ID del consejo" });
+        }
+        
+        const consejoActualizado = await Consejo.findByIdAndUpdate(
+            id,
+            { titulo, contenido, etiquetas },
+            { new: true, runValidators: true }
+        );
+        
+        if (!consejoActualizado) {
+            return res.status(404).json({ message: "Consejo no encontrado" });
+        }
+        
+        res.status(200).json(consejoActualizado);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ELIMINAR UN CONSEJO
+export const deleteConsejo = asyncHandler(async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (!id) {
+            return res.status(400).json({ message: "Se requiere el ID del consejo" });
+        }
+        
+        const consejoEliminado = await Consejo.findByIdAndDelete(id);
+        
+        if (!consejoEliminado) {
+            return res.status(404).json({ message: "Consejo no encontrado" });
+        }
+        
+        res.status(200).json({ message: "Consejo eliminado correctamente" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
