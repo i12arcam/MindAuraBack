@@ -109,7 +109,7 @@ export const getHistorialEmociones = asyncHandler(async (req, res) => {
         console.log("Datos agrupados:", emocionesAgrupadas);
 
         // Filtramos solo las emociones básicas
-        const emocionesBase = ["Alegria", "Tristeza", "Miedo", "Ira"];
+        const emocionesBase = ["Alegría", "Tristeza", "Miedo", "Ira"];
         const resultado = emocionesBase.map(emocion => {
             const encontrada = emocionesAgrupadas.find(e => e.tipo === emocion);
             return {

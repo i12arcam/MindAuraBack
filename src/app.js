@@ -32,6 +32,9 @@ import usuarioRecursoRoutes from './routes/UsuarioRecursoRoute.js';
 import metaRoutes from './routes/MetaRoute.js';
 import programaRoutes from './routes/ProgramaRoute.js'
 import usuarioProgramaRoutes from './routes/UsuarioProgramaRoute.js';
+import usuarioRegistrosRoutes from './routes/UsuarioRegistrosRoute.js';
+import usuarioProgresoRoutes from './routes/UsuarioProgresoRoute.js';
+import logroRoutes from './routes/LogroRoute.js';
 
 app.use('/api/user', userRoutes);
 app.use('/api/consejo', consejoRoutes);
@@ -41,6 +44,9 @@ app.use('/api/usuarioRecurso', usuarioRecursoRoutes);
 app.use('/api/programa', programaRoutes);
 app.use('/api/usuarioPrograma', usuarioProgramaRoutes);
 app.use('/api/meta', metaRoutes);
+app.use('/api/usuarioRegistros', usuarioRegistrosRoutes);
+app.use('/api/usuarioProgreso', usuarioProgresoRoutes);
+app.use('/api/logros', logroRoutes);
 
 app.use(express.static('public'));
 

@@ -11,24 +11,10 @@ const logroSchema = new Schema({
         required: true,
         trim: true
     },
-    categoria: {
+    evento: { // Tipo de evento al que el logro está asociado
         type: String,
         required: true
-    },
-    dificultad : {
-        type: String,
-        required: true
-    },
-    estado : {
-        type: String,
-        required: true
-    }
-},
-{
-    timestamps: { 
-        createdAt: 'fecha_creacion'
     }
 });
-
 
 export default model('Logro', logroSchema);
