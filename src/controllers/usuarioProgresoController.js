@@ -4,47 +4,100 @@ import asyncHandler from 'express-async-handler';
 
 // Función para otorgar XP (maneja TODO lo relacionado con XP)
 export const otorgarXP = asyncHandler(async (req, res) => {
-    console.log("Registrar XP:", req.body);
     const { usuarioId, evento, dificultad, duracion } = req.body;
+
+    // 1. Obtener o crear progreso actual del usuario
+    let progreso = await UsuarioProgreso.findOne({ usuarioId });
     
-    // 1. Calcular XP ganado
-    const xpGanado = calcularXP(evento, dificultad, duracion);
+    // 2. Validar y actualizar la racha (y crear progreso si no existe)
+    const { rachaActualizada, progresoActualizado } = await actualizarRacha(progreso, usuarioId);
     
-    // 2. Obtener progreso actual del usuario
-    const progreso = await UsuarioProgreso.findOne({ usuarioId });
+    // 3. Si no existía progreso, usar el recién creado
+    if (!progreso) {
+        progreso = progresoActualizado;
+    }
     
-    // 3. Actualizar nivel y XP
-    const datosNivel = await actualizarNivelYXP(progreso, usuarioId, xpGanado);
+    // 4. Calcular XP ganado (usando la racha actualizada)
+    const xpGanado = calcularXP(evento, dificultad, duracion, rachaActualizada);
+    
+    // 5. Actualizar nivel y XP
+    const datosNivel = await actualizarNivelYXP(progreso, usuarioId, xpGanado, rachaActualizada);
 
     console.log(datosNivel);
     
-    // 4. Retornar todos los datos relacionados con XP
+    // 6. Retornar todos los datos relacionados con XP
     res.status(200).json({
         nivel: datosNivel.nivel,
-        nuevoNivel: datosNivel.subioNivel
+        nuevoNivel: datosNivel.subioNivel,
+        racha: rachaActualizada
     });
 });
 
-// Función para actualizar nivel y XP
-const actualizarNivelYXP = async (progreso, usuarioId, xpGanada) => {
-    let nivelActual, xpNivelActual, xpSiguienteNivel, subioNivel = false;
-
+// Función para validar y actualizar la racha
+const actualizarRacha = async (progreso, usuarioId) => {
+    const ahora = new Date();
+    const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    
     if (!progreso) {
-        // Crear nuevo progreso si no existe
-        xpSiguienteNivel = calcularXPparaNivel(1);
+        // Si no existe progreso, crear uno nuevo con racha = 1
         const nuevoProgreso = await UsuarioProgreso.create({
             usuarioId,
-            xpTotal: xpGanada,
-            xpNivelActual: xpGanada,
-            xpSiguienteNivel,
+            racha: 1,
+            ultimaActividad: ahora,
+            xpTotal: 0,
+            xpNivelActual: 0,
+            xpSiguienteNivel: calcularXPparaNivel(1),
             nivel: 1
         });
-        
         return { 
-            nivel: 1, 
-            subioNivel: true // Primer nivel siempre cuenta como subida
+            rachaActualizada: 1, 
+            progresoActualizado: nuevoProgreso 
         };
     }
+
+    const ultimaActividad = new Date(progreso.ultimaActividad);
+    const ultimoDiaActividad = new Date(ultimaActividad.getFullYear(), ultimaActividad.getMonth(), ultimaActividad.getDate());
+    
+    const diferenciaDias = Math.floor((hoy - ultimoDiaActividad) / (1000 * 60 * 60 * 24));
+    
+    let nuevaRacha = progreso.racha;
+    
+    if (diferenciaDias === 0) {
+        // Mismo día: mantener la racha actual (no sumar)
+        return { 
+            rachaActualizada: progreso.racha, 
+            progresoActualizado: progreso 
+        };
+    } else if (diferenciaDias === 1) {
+        // Día siguiente: incrementar racha
+        nuevaRacha = progreso.racha + 1;
+    } else if (diferenciaDias >= 2) {
+        // Más de 1 día de diferencia: resetear racha a 1
+        nuevaRacha = 1;
+    }
+    
+    // Actualizar solo la racha y última actividad
+    await UsuarioProgreso.findOneAndUpdate(
+        { usuarioId },
+        {
+            racha: nuevaRacha,
+            ultimaActividad: ahora
+        }
+    );
+    
+    // Actualizar el objeto progreso localmente para reflejar los cambios
+    progreso.racha = nuevaRacha;
+    progreso.ultimaActividad = ahora;
+    
+    return { 
+        rachaActualizada: nuevaRacha, 
+        progresoActualizado: progreso 
+    };
+};
+
+// Función para actualizar nivel y XP (modificada)
+const actualizarNivelYXP = async (progreso, usuarioId, xpGanada, racha) => {
+    let nivelActual, xpNivelActual, xpSiguienteNivel;
 
     // Guardar nivel anterior para detectar cambios
     const nivelAnterior = progreso.nivel;
@@ -58,7 +111,6 @@ const actualizarNivelYXP = async (progreso, usuarioId, xpGanada) => {
         xpNivelActual -= xpSiguienteNivel;
         nivelActual += 1;
         xpSiguienteNivel = calcularXPparaNivel(nivelActual);
-        subioNivel = true; // Marcamos que hubo al menos un aumento de nivel
     }
 
     // Actualizar en base de datos
@@ -69,7 +121,8 @@ const actualizarNivelYXP = async (progreso, usuarioId, xpGanada) => {
             nivel: nivelActual,
             xpNivelActual,
             xpSiguienteNivel,
-            ultimaActividad: new Date()
+            racha: racha,
+            ultimaActividad: progreso.ultimaActividad // Mantener la misma fecha
         }
     );
 

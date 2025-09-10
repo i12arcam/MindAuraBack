@@ -126,13 +126,13 @@ export const buscarRecursos = asyncHandler(async (req, res) => {
                 query = { titulo: { $regex: parametro, $options: 'i' } };
                 break;
             case "categoria":
-                query = { categoria: parametro };
-                break;
-            case "etiquetas":
-                const etiquetas = parametro.split(',').map(etiqueta => etiqueta.trim());
-                
-                // Buscar recursos que contengan al menos una de las etiquetas
-                query = { etiquetas: { $in: etiquetas } };
+                const parametroNormalizado = parametro
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/\s/g, "")
+                    .toLowerCase();
+                    
+                query = { categoria: parametroNormalizado };
                 break;
             default:
                 res.status(401).json("Filtro no valido");

@@ -74,3 +74,10 @@ export const NIVELES_CONFIG = {
     base_xp: 100, // XP base para el nivel 1
     factor_crecimiento: 1.5 // Factor de crecimiento exponencial
 };
+
+export const RACHA_CONFIG = {
+    base_multiplier: 1.0,
+    incremento_por_dia: 0.0333, // 5% más por cada día de racha
+    max_multiplier: 2.0,      // Máximo 100% de bonus
+    dias_para_max: 30         // Días necesarios para alcanzar el máximo
+};

@@ -23,7 +23,7 @@ const UsuarioProgresoSchema = new Schema({
         default: 100,
         min: 0
     },
-    streak: {
+    racha: {
         type: Number,
         default: 0,
         min: 0

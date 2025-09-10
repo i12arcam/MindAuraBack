@@ -9,7 +9,21 @@ import { todosLosProgramas } from '../data/listaProgramasApp.js';
 export const getProgramas = asyncHandler(async (req, res) => {
     try {
         const programas = await Programa.find({}).populate('recursos');
-        res.status(200).json(programas);
+        
+        // Transformar cada programa para cambiar _id → id en los recursos
+        const programasTransformados = programas.map(programa => {
+            const programaObj = programa.toObject({ virtuals: true });
+            return {
+                ...programaObj,
+                recursos: programaObj.recursos.map(recurso => ({
+                    id: recurso._id.toString(),
+                    ...recurso,
+                    _id: undefined
+                }))
+            };
+        });
+        
+        res.status(200).json(programasTransformados);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -19,6 +33,7 @@ export const getProgramas = asyncHandler(async (req, res) => {
 export const getPrograma = asyncHandler(async (req, res) => {
     try {
         const programa = await Programa.findById(req.params.idPrograma).populate('recursos');
+        // ✅ Haces populate correctamente
 
         if (!programa) {
             return res.status(404).json({ message: "Programa no encontrado" });
@@ -136,23 +151,22 @@ export const buscarProgramas = asyncHandler(async (req, res) => {
     const { parametro, filtro } = req.params;
     try {
         let query = {};
-        
+
         switch(filtro) {
             case "titulo":
                 query = { titulo: { $regex: parametro, $options: 'i' } };
                 break;
             case "categoria":
-                query = { categoria: parametro };
-                break;
-            case "etiquetas":
-                const etiquetas = parametro.split(',').map(etiqueta => etiqueta.trim());
+                const parametroNormalizado = parametro
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/\s/g, "")
+                    .toLowerCase();
 
-                // Buscar programas que contengan al menos una de las etiquetas
-                query = { etiquetas: { $in: etiquetas } };
+                query = { categoria: parametroNormalizado };
                 break;
             default:
-                res.status(401).json("Filtro no válido");
-                break;
+                return res.status(400).json("Filtro no válido");
         }
 
         const programas = await Programa.find(query).populate('recursos');
@@ -167,9 +181,7 @@ export const buscarProgramas = asyncHandler(async (req, res) => {
 // CREAR UN NUEVO PROGRAMA
 export const createPrograma = asyncHandler(async (req, res) => {
     const { titulo, descripcion, categoria, etiquetas, recursos } = req.body;
-
     
-    // El backend ahora espera array de strings (IDs), no objetos completos
     if (!titulo || !categoria || !recursos || recursos.length === 0) {
         return res.status(400).json({ 
             message: "Faltan campos requeridos" 
@@ -194,7 +206,17 @@ export const createPrograma = asyncHandler(async (req, res) => {
         // Populate para devolver el programa con recursos completos
         const programaPopulado = await Programa.findById(nuevoPrograma._id).populate('recursos');
         
-        res.status(201).json(programaPopulado);
+        // ✅ Transformar _id → id en los recursos
+        const programaTransformado = {
+            ...programaPopulado.toObject({ virtuals: true }),
+            recursos: programaPopulado.recursos.map(recurso => ({
+                id: recurso._id.toString(),
+                ...recurso.toObject(),
+                _id: undefined
+            }))
+        };
+        
+        res.status(201).json(programaTransformado);
 
     } catch (error) {
         console.error("Error en creación de Programa:", error);
@@ -232,7 +254,20 @@ export const updatePrograma = asyncHandler(async (req, res) => {
         }
         
         const programaActualizado = await programa.save();
-        res.status(200).json(programaActualizado);
+        
+        const programaPopulado = await Programa.findById(programaActualizado._id).populate('recursos');
+        
+        // Transformar _id → id en los recursos
+        const programaTransformado = {
+            ...programaPopulado.toObject({ virtuals: true }),
+            recursos: programaPopulado.recursos.map(recurso => ({
+                id: recurso._id.toString(),
+                ...recurso.toObject(),
+                _id: undefined
+            }))
+        };
+        
+        res.status(200).json(programaTransformado);
         
     } catch (error) {
         res.status(500).json({ message: error.message });
