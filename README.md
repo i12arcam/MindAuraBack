@@ -2,6 +2,14 @@
 
 Backend desarrollado como Trabajo de Fin de Grado.
 
+## Descripción
+
+Aplicación móvil orientada a que los usuarios puedan gestionar su salud mental y emocional, mediante seguimiento del estado de ánimo, técnicas de mindfulness, mensajes motivacionales, consejos, actividades y metas personales.
+
+## Documentación
+
+La documentación completa del Trabajo de Fin de Grado está disponible en la carpeta /docs.
+
 ## Tecnologías
 
 - Node.js / Express
